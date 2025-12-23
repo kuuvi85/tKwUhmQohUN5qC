@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ruusterit</title>
+    <style>
+      :root {
+        --bg: #000;
+        --fg: #f2f2f2;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: "Times New Roman", Times, serif;
+        letter-spacing: 0.02em;
+      }
+
+      .mark {
+        font-size: clamp(6rem, 20vw, 14rem);
+        line-height: 1;
+        user-select: none;
+      }
+
+      .hint {
+        position: fixed;
+        bottom: 1.5rem;
+        width: 100%;
+        text-align: center;
+        font-size: 0.85rem;
+        color: #777;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="mark">?</div>
+    <div class="hint">Attempting autoplay...</div>
+    <script>
+      const MORSE = {
+        A: ".-",
+        B: "-...",
+        C: "-.-.",
+        D: "-..",
+        E: ".",
+        F: "..-.",
+        G: "--.",
+        H: "....",
+        I: "..",
+        J: ".---",
+        K: "-.-",
+        L: ".-..",
+        M: "--",
+        N: "-.",
+        O: "---",
+        P: ".--.",
+        Q: "--.-",
+        R: ".-.",
+        S: "...",
+        T: "-",
+        U: "..-",
+        V: "...-",
+        W: ".--",
+        X: "-..-",
+        Y: "-.--",
+        Z: "--..",
+      };
+
+      const message = "Ruusterit";
+      const unit = 0.12;
+      const freq = 700;
+
+      let audioStarted = false;
+      let context;
+
+      const hint = document.querySelector(".hint");
+
+      function encodeMorse(text) {
+        return text
+          .toUpperCase()
+          .split("")
+          .map((char) => MORSE[char] || "")
+          .filter(Boolean);
+      }
+
+      function scheduleTone(context, startTime, duration) {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.value = freq;
+        gain.gain.value = 0.0;
+
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+
+        oscillator.start(startTime);
+        gain.gain.setValueAtTime(0.0, startTime);
+        gain.gain.linearRampToValueAtTime(0.2, startTime + 0.01);
+        gain.gain.setValueAtTime(0.2, startTime + duration - 0.01);
+        gain.gain.linearRampToValueAtTime(0.0, startTime + duration);
+        oscillator.stop(startTime + duration + 0.02);
+      }
+
+      function playMorse(context, letters) {
+        let t = context.currentTime + 0.2;
+
+        letters.forEach((pattern, index) => {
+          pattern.split("").forEach((symbol, symbolIndex) => {
+            const toneDuration = symbol === "." ? unit : unit * 3;
+            scheduleTone(context, t, toneDuration);
+            t += toneDuration;
+            if (symbolIndex < pattern.length - 1) {
+              t += unit;
+            }
+          });
+
+          if (index < letters.length - 1) {
+            t += unit * 3;
+          }
+        });
+      }
+
+      function startAudio() {
+        if (audioStarted) {
+          return;
+        }
+        context =
+          context ||
+          new (window.AudioContext || window.webkitAudioContext)();
+        if (context.state === "suspended") {
+          context.resume();
+        }
+        if (context.state !== "running") {
+          hint.textContent = "Autoplay blocked by browser";
+          return;
+        }
+        audioStarted = true;
+        hint.textContent = "Playing...";
+        const letters = encodeMorse(message);
+        playMorse(context, letters);
+      }
+
+      window.addEventListener("load", startAudio);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          startAudio();
+        }
+      });
+    </script>
+  </body>
+</html>
