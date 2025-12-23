@@ -149,12 +149,12 @@
         activeNodes = [];
       }
 
-      function startAudio() {
-        context =
-          context ||
-          new (window.AudioContext || window.webkitAudioContext)();
+      async function startAudio() {
+        if (!context) {
+          context = new (window.AudioContext || window.webkitAudioContext)();
+        }
         if (context.state === "suspended") {
-          context.resume();
+          await context.resume();
         }
         if (context.state !== "running") {
           return;
@@ -164,15 +164,9 @@
         playMorse(context, letters);
       }
 
-      window.addEventListener("load", startAudio);
       startButton.addEventListener("click", startAudio);
       startButton.addEventListener("pointerdown", startAudio);
       startButton.addEventListener("touchstart", startAudio, { passive: true });
-      document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible") {
-          startAudio();
-        }
-      });
     </script>
   </body>
 </html>
