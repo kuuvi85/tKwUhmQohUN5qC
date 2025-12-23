@@ -87,8 +87,8 @@
       const unit = 0.12;
       const freq = 700;
 
-      let audioStarted = false;
       let context;
+      let activeNodes = [];
 
       const startButton = document.querySelector(".mark");
 
@@ -116,6 +116,7 @@
         gain.gain.setValueAtTime(0.2, startTime + duration - 0.01);
         gain.gain.linearRampToValueAtTime(0.0, startTime + duration);
         oscillator.stop(startTime + duration + 0.02);
+        activeNodes.push(oscillator);
       }
 
       function playMorse(context, letters) {
@@ -137,10 +138,18 @@
         });
       }
 
+      function stopActive() {
+        activeNodes.forEach((node) => {
+          try {
+            node.stop();
+          } catch (error) {
+            // Ignore nodes that already stopped.
+          }
+        });
+        activeNodes = [];
+      }
+
       function startAudio() {
-        if (audioStarted) {
-          return;
-        }
         context =
           context ||
           new (window.AudioContext || window.webkitAudioContext)();
@@ -150,7 +159,7 @@
         if (context.state !== "running") {
           return;
         }
-        audioStarted = true;
+        stopActive();
         const letters = encodeMorse(message);
         playMorse(context, letters);
       }
