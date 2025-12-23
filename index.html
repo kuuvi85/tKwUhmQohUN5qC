@@ -157,6 +157,8 @@
 
       window.addEventListener("load", startAudio);
       startButton.addEventListener("click", startAudio);
+      startButton.addEventListener("pointerdown", startAudio);
+      startButton.addEventListener("touchstart", startAudio, { passive: true });
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") {
           startAudio();
