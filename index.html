@@ -35,21 +35,24 @@
         user-select: none;
       }
 
-      .hint {
-        position: fixed;
-        bottom: 1.5rem;
-        width: 100%;
-        text-align: center;
-        font-size: 0.85rem;
-        color: #777;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
+      button.mark {
+        appearance: none;
+        border: none;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        padding: 0;
       }
+
+      button.mark:focus-visible {
+        outline: 2px solid #666;
+        outline-offset: 6px;
+      }
+
     </style>
   </head>
   <body>
-    <div class="mark">?</div>
-    <div class="hint">Attempting autoplay...</div>
+    <button class="mark" type="button" aria-label="Start audio">?</button>
     <script>
       const MORSE = {
         A: ".-",
@@ -87,7 +90,7 @@
       let audioStarted = false;
       let context;
 
-      const hint = document.querySelector(".hint");
+      const startButton = document.querySelector(".mark");
 
       function encodeMorse(text) {
         return text
@@ -145,16 +148,15 @@
           context.resume();
         }
         if (context.state !== "running") {
-          hint.textContent = "Autoplay blocked by browser";
           return;
         }
         audioStarted = true;
-        hint.textContent = "Playing...";
         const letters = encodeMorse(message);
         playMorse(context, letters);
       }
 
       window.addEventListener("load", startAudio);
+      startButton.addEventListener("click", startAudio);
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible") {
           startAudio();
